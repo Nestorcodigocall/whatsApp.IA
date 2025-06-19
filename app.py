@@ -4,11 +4,11 @@ import openai
 app = Flask(__name__)
 
 # Configura tu API key de OpenAI
-openai.api_key = "TU_API_KEY_DE_OPENAI"  # Reemplázalo por tu clave real
+openai.api_key = "TU_API_KEY_DE_OPENAI"  # ← reemplaza por tu clave
 
 @app.route("/", methods=["GET"])
 def home():
-    return "Servidor Flask corriendo correctamente."
+    return "🤖 Bot de WhatsApp está activo y esperando mensajes de Twilio."
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -33,7 +33,7 @@ def generar_respuesta_con_openai(mensaje_usuario):
     respuesta = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Eres un asistente de ventas por WhatsApp."},
+            {"role": "system", "content": "Eres un asesor de ventas por WhatsApp. Sé claro, corto y amable."},
             {"role": "user", "content": mensaje_usuario}
         ]
     )
@@ -42,5 +42,6 @@ def generar_respuesta_con_openai(mensaje_usuario):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
+
 
 
