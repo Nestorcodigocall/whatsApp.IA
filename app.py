@@ -1,42 +1,42 @@
+from flask import Flask, request
+from openai import OpenAI
 import os
-from flask import Flask, request, jsonify
-import openai
 
 app = Flask(__name__)
 
-# Usa la clave desde una variable de entorno
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# Asegúrate de definir tu clave en Render como una variable de entorno llamada OPENAI_API_KEY
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route("/")
 def index():
-    return "🤖 Bot de WhatsApp funcionando correctamente."
+    return "🤖 Bot activo."
 
-@app.route("/webhook", methods=["GET", "POST"])
+@app.route("/webhook", methods=["POST"])
 def webhook():
-    if request.method == "GET":
-        return "👋 Este endpoint es solo para recibir mensajes de WhatsApp (POST)."
-    
-    # Extraer el mensaje recibido
-    user_message = data.get("Body", "").strip()
-
-    if not user_message:
-        return jsonify({"error": "No se recibió ningún mensaje."}), 400
-
     try:
-        # Enviar mensaje a OpenAI y obtener respuesta
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": user_message}]
-        )
-        ai_reply = response.choices[0].message.content.strip()
-    except Exception as e:
-        return jsonify({"error": f"Error al comunicarse con OpenAI: {str(e)}"}), 500
+        mensaje = request.form.get("Body", "")
+        numero = request.form.get("From", "")
+        
+        print(f"Mensaje recibido: {mensaje} de {numero}")
 
-    # Respuesta que será enviada de vuelta al cliente
-    return jsonify({"reply": ai_reply})
+        # Enviar a OpenAI (GPT-3.5)
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": mensaje}]
+        )
+        respuesta = completion.choices[0].message.content.strip()
+
+        print(f"Respuesta generada: {respuesta}")
+
+        return respuesta, 200
+
+    except Exception as e:
+        print(f"Error en /webhook: {e}")
+        return "Error interno del servidor", 500
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=10000)
+    app.run(debug=True)
+
 
 
 
