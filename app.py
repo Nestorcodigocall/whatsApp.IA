@@ -11,9 +11,10 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 def index():
     return "🤖 Bot de WhatsApp funcionando correctamente."
 
-@app.route("/webhook", methods=["POST"])
+@app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    data = request.get_json()
+    if request.method == "GET":
+        return "👋 Este endpoint es solo para recibir mensajes de WhatsApp (POST)."
     
     # Extraer el mensaje recibido
     user_message = data.get("Body", "").strip()
