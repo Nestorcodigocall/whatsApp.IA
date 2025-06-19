@@ -1,50 +1,46 @@
 from flask import Flask, request
 import openai
-import requests
-import os
-
-client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 app = Flask(__name__)
 
+# Configura tu API key de OpenAI
+openai.api_key = "TU_API_KEY_DE_OPENAI"  # Reemplázalo por tu clave real
+
+@app.route("/", methods=["GET"])
+def home():
+    return "Servidor Flask corriendo correctamente."
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.form
-    msg_body = data.get('Body')
-    msg_type = data.get('MediaContentType0')
-    from_number = data.get('From')
+    try:
+        message = request.form.get("Body")
+        sender = request.form.get("From")
+        print(f"Mensaje de {sender}: {message}")
 
-    if msg_type == 'audio/ogg':
-        audio_url = data.get('MediaUrl0')
-        audio_response = requests.get(audio_url)
-        with open("audio.ogg", "wb") as f:
-            f.write(audio_response.content)
+        respuesta = generar_respuesta_con_openai(message)
 
-        with open("audio.ogg", "rb") as audio_file:
-            transcript = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file
-            )
-            user_message = transcript.text
-    else:
-        user_message = msg_body
+        return f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>{respuesta}</Message>
+</Response>""", 200, {'Content-Type': 'application/xml'}
 
-    response = client.chat.completions.create(
-        model="gpt-4",
+    except Exception as e:
+        print("Error en /webhook:", e)
+        return "Error interno", 500
+
+
+def generar_respuesta_con_openai(mensaje_usuario):
+    respuesta = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Eres una asistente virtual de atención al cliente y ventas."},
-            {"role": "user", "content": user_message}
+            {"role": "system", "content": "Eres un asistente de ventas por WhatsApp."},
+            {"role": "user", "content": mensaje_usuario}
         ]
     )
-    reply = response.choices[0].message.content
+    return respuesta.choices[0].message["content"].strip()
 
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Message>Hola 👋, soy la asistente de Tu Empresa. ¿En qué puedo ayudarte hoy?
-
-{reply}</Message>
-</Response>"""
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
+
 
